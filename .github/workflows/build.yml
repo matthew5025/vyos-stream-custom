@@ -19,15 +19,70 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
-      - name: Build ISO
+      - name: Load build config
         run: |
           set -eux
           image="$(jq -r '.build_container' custom-build.json)"
           version="${{ inputs.version }}"
-          docker pull "$image"
-          args=(docker run --rm --privileged -v "$PWD:/repo" -w /repo -e "VERSION=$version")
-          args+=("$image" bash -lc ./scripts/build.sh)
-          "${args[@]}"
+          echo "BUILD_IMAGE=$image" >> "$GITHUB_ENV"
+          echo "BUILD_VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Pull build container
+        run: docker pull "$BUILD_IMAGE"
+
+      - name: Show build config
+        run: |
+          docker run --rm \
+            -v "$PWD:/repo" \
+            -w /repo \
+            -e "VERSION=$BUILD_VERSION" \
+            "$BUILD_IMAGE" \
+            bash -lc './scripts/build.sh show-config'
+
+      - name: Build kernel and firmware packages
+        run: |
+          docker run --rm --privileged \
+            -v "$PWD:/repo" \
+            -w /repo \
+            -e "VERSION=$BUILD_VERSION" \
+            "$BUILD_IMAGE" \
+            bash -lc './scripts/build.sh kernel-packages'
+
+      - name: Stage custom packages
+        run: |
+          docker run --rm \
+            -v "$PWD:/repo" \
+            -w /repo \
+            -e "VERSION=$BUILD_VERSION" \
+            "$BUILD_IMAGE" \
+            bash -lc './scripts/build.sh stage-packages'
+
+      - name: Build ISO
+        run: |
+          docker run --rm --privileged -u 0:0 \
+            -v "$PWD:/repo" \
+            -w /repo \
+            -e "VERSION=$BUILD_VERSION" \
+            "$BUILD_IMAGE" \
+            bash -lc './scripts/build.sh iso'
+
+      - name: Collect ISO outputs
+        run: |
+          docker run --rm \
+            -v "$PWD:/repo" \
+            -w /repo \
+            -e "VERSION=$BUILD_VERSION" \
+            "$BUILD_IMAGE" \
+            bash -lc './scripts/build.sh collect'
+
+      - name: Verify ISO outputs
+        run: |
+          docker run --rm \
+            -v "$PWD:/repo" \
+            -w /repo \
+            -e "VERSION=$BUILD_VERSION" \
+            "$BUILD_IMAGE" \
+            bash -lc './scripts/build.sh verify'
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

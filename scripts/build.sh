@@ -10,27 +10,110 @@ build_type="$(jq -r '.build_type' "${config}")"
 build_by="$(jq -r '.build_by' "${config}")"
 build_dir="${root_dir}/upstream/vyos-build"
 out_dir="${root_dir}/out"
+command="${1:-all}"
 
-mkdir -p "${out_dir}" "${build_dir}/packages"
+prepare_dirs() {
+  mkdir -p "${out_dir}" "${build_dir}/packages"
+}
 
-cd "${build_dir}/scripts/package-build/linux-kernel"
-./build.py --config package.toml --packages linux-kernel linux-firmware
+show_config() {
+  jq . "${config}"
+}
 
-cd "${build_dir}"
-rm -f packages/*.deb
-cp scripts/package-build/linux-kernel/linux-headers-*-vyos_*_amd64.deb packages/
-cp scripts/package-build/linux-kernel/linux-image-*-vyos_*_amd64.deb packages/
-cp scripts/package-build/linux-kernel/linux-libc-dev_*_amd64.deb packages/
-cp scripts/package-build/linux-kernel/linux-perf-*-vyos_*_amd64.deb packages/
-cp scripts/package-build/linux-kernel/vyos-linux-firmware_*.deb packages/
-find packages -maxdepth 1 -type f -name "*.deb" -print -exec sha256sum {} \; | tee "${out_dir}/package-SHA256SUMS"
+build_kernel_packages() {
+  prepare_dirs
+  cd "${build_dir}/scripts/package-build/linux-kernel"
+  ./build.py --config package.toml --packages linux-kernel linux-firmware
+}
 
-./build-vyos-image "${build_flavor}" \
-  --architecture "${architecture}" \
-  --build-by "${build_by}" \
-  --build-type "${build_type}" \
-  --version "${version}"
+copy_packages() {
+  local source_dir="$1"
+  local matches=()
 
-cp build/*.iso "${out_dir}/"
-cp build/*.sha256 "${out_dir}/" 2>/dev/null || true
-sha256sum "${out_dir}"/*.iso | tee "${out_dir}/SHA256SUMS"
+  shift
+  for pattern in "$@"; do
+    matches=("${source_dir}"/${pattern})
+    if [[ ! -e "${matches[0]}" ]]; then
+      echo "No package matched ${source_dir}/${pattern}" >&2
+      exit 1
+    fi
+    cp "${matches[@]}" "${build_dir}/packages/"
+  done
+}
+
+stage_packages() {
+  prepare_dirs
+  cd "${build_dir}"
+  rm -f packages/*.deb
+  copy_packages scripts/package-build/linux-kernel \
+    "linux-headers-*-vyos_*_${architecture}.deb" \
+    "linux-image-*-vyos_*_${architecture}.deb" \
+    "linux-libc-dev_*_${architecture}.deb" \
+    "linux-perf-*-vyos_*_${architecture}.deb" \
+    "vyos-linux-firmware_*.deb"
+  find packages -maxdepth 1 -type f -name "*.deb" -print -exec sha256sum {} \; | tee "${out_dir}/package-SHA256SUMS"
+}
+
+build_iso() {
+  prepare_dirs
+  cd "${build_dir}"
+  ./build-vyos-image "${build_flavor}" \
+    --architecture "${architecture}" \
+    --build-by "${build_by}" \
+    --build-type "${build_type}" \
+    --version "${version}"
+}
+
+collect_outputs() {
+  prepare_dirs
+  cd "${build_dir}"
+  cp build/*.iso "${out_dir}/"
+  cp build/*.sha256 "${out_dir}/" 2>/dev/null || true
+}
+
+verify_outputs() {
+  prepare_dirs
+  shopt -s nullglob
+  local isos=("${out_dir}"/*.iso)
+  if (( ${#isos[@]} == 0 )); then
+    echo "No ISO files found in ${out_dir}" >&2
+    exit 1
+  fi
+  sha256sum "${isos[@]}" | tee "${out_dir}/SHA256SUMS"
+}
+
+run_all() {
+  build_kernel_packages
+  stage_packages
+  build_iso
+  collect_outputs
+  verify_outputs
+}
+
+case "${command}" in
+  all)
+    run_all
+    ;;
+  show-config)
+    show_config
+    ;;
+  kernel-packages)
+    build_kernel_packages
+    ;;
+  stage-packages)
+    stage_packages
+    ;;
+  iso)
+    build_iso
+    ;;
+  collect)
+    collect_outputs
+    ;;
+  verify)
+    verify_outputs
+    ;;
+  *)
+    echo "Usage: $0 [all|show-config|kernel-packages|stage-packages|iso|collect|verify]" >&2
+    exit 2
+    ;;
+esac
