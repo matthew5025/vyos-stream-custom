@@ -20,6 +20,14 @@ show_config() {
   jq . "${config}"
 }
 
+ccache_stats() {
+  if command -v ccache >/dev/null 2>&1; then
+    ccache --show-stats
+  else
+    echo "ccache is not installed"
+  fi
+}
+
 build_kernel_packages() {
   prepare_dirs
   cd "${build_dir}/scripts/package-build/linux-kernel"
@@ -97,6 +105,9 @@ case "${command}" in
   show-config)
     show_config
     ;;
+  ccache-stats)
+    ccache_stats
+    ;;
   kernel-packages)
     build_kernel_packages
     ;;
@@ -113,7 +124,7 @@ case "${command}" in
     verify_outputs
     ;;
   *)
-    echo "Usage: $0 [all|show-config|kernel-packages|stage-packages|iso|collect|verify]" >&2
+    echo "Usage: $0 [all|show-config|ccache-stats|kernel-packages|stage-packages|iso|collect|verify]" >&2
     exit 2
     ;;
 esac

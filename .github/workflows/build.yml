@@ -30,6 +30,14 @@ jobs:
       - name: Pull build container
         run: docker pull "$BUILD_IMAGE"
 
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: vyos-ccache-${{ runner.os }}-${{ hashFiles('custom-build.json', 'patches/*.patch', 'upstream/vyos-build/scripts/package-build/linux-kernel/config/**/*.config', 'upstream/vyos-build/scripts/package-build/linux-kernel/config/**/vyos_defconfig') }}
+          restore-keys: |
+            vyos-ccache-${{ runner.os }}-
+
       - name: Show build config
         run: |
           docker run --rm \
@@ -39,14 +47,40 @@ jobs:
             "$BUILD_IMAGE" \
             bash -lc './scripts/build.sh show-config'
 
+      - name: Show compiler cache before build
+        run: |
+          docker run --rm \
+            -v "$PWD:/repo" \
+            -w /repo \
+            -e CCACHE_DIR=/repo/.ccache \
+            -e CCACHE_MAXSIZE=5G \
+            -e CCACHE_COMPRESS=1 \
+            "$BUILD_IMAGE" \
+            bash -lc './scripts/build.sh ccache-stats'
+
       - name: Build kernel and firmware packages
         run: |
           docker run --rm --privileged \
             -v "$PWD:/repo" \
             -w /repo \
             -e "VERSION=$BUILD_VERSION" \
+            -e CCACHE_DIR=/repo/.ccache \
+            -e CCACHE_MAXSIZE=5G \
+            -e CCACHE_COMPRESS=1 \
             "$BUILD_IMAGE" \
             bash -lc './scripts/build.sh kernel-packages'
+
+      - name: Show compiler cache after build
+        if: always()
+        run: |
+          docker run --rm \
+            -v "$PWD:/repo" \
+            -w /repo \
+            -e CCACHE_DIR=/repo/.ccache \
+            -e CCACHE_MAXSIZE=5G \
+            -e CCACHE_COMPRESS=1 \
+            "$BUILD_IMAGE" \
+            bash -lc './scripts/build.sh ccache-stats'
 
       - name: Stage custom packages
         run: |
