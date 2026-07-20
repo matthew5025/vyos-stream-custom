@@ -1,0 +1,23 @@
+.build/config
+build/*
+config/*
+*.pyc
+packer_build/*
+packer_cache/*
+key/*
+packages/*
+rootfs/*
+!packages/*/
+/testinstall*.raw
+/testinstall*.efivars
+/ci_data
+/ci_seed.iso
+/nested_installer_payload.iso
+/*.qcow2
+/*.tar
+.DS_Store
+._.DS_Store
+.venv
+
+# AI stuff
+.claude/

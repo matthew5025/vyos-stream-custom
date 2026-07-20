@@ -1,0 +1,19 @@
+# Packages added to images for x86 by default
+packages = [
+  "grub2",
+  "grub-pc",
+  "vyos-drivers-realtek-r8152",
+  "vyos-linux-firmware",
+  "vyos-intel-qat",
+  "vyos-intel-ixgbe",
+  "vyos-intel-ixgbevf",
+  "vyos-intel-i40e",
+  "vyos-intel-ice",
+  "vyos-intel-iavf",
+  "vyos-ipt-netflow",
+  "intel-microcode",
+  "amd64-microcode"
+]
+
+[boot_settings]
+  console_type = "ttyS"

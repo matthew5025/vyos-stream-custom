@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+
+# The Cisco Unity plugin, that implements a proprietary extension
+# for IPsec split tunneling, interferes with DMVPN
+#
+# Since we do not do remote access IPsec, the simplest solution
+# is to disable it entirely from the start.
+
+# Prevent the 'cisco_unity' plugin from loading
+with open('/etc/strongswan.d/charon/unity.conf', 'r') as f:
+    unity_conf = f.read()
+    unity_conf = unity_conf.replace('load = yes', 'load = no')
+
+with open('/etc/strongswan.d/charon/unity.conf', 'w') as f:
+    f.write(unity_conf)
+
+# Prevent the 'farp' plugin from loading
+with open('/etc/strongswan.d/charon/farp.conf', 'r') as f:
+    farp_conf = f.read()
+    farp_conf = farp_conf.replace('load = yes', 'load = no')
+
+with open('/etc/strongswan.d/charon/farp.conf', 'w') as f:
+    f.write(farp_conf)
+
+# Add ike-name to logging
+charon_logging = """
+charon {
+    syslog {
+        # prefix for each log message
+        identifier = charon
+        # use default settings to log to the LOG_DAEMON facility
+        daemon {
+            default = 1
+            ike_name = yes
+        }
+    }
+}
+"""
+
+with open('/etc/strongswan.d/charon-logging.conf', 'w') as f:
+    f.write(charon_logging)
