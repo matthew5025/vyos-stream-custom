@@ -12,6 +12,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    permissions:
+      contents: write
 
     steps:
       - name: Check out source
@@ -20,16 +22,23 @@ jobs:
       - name: Build ISO
         run: |
           set -eux
-          docker pull vyos/vyos-build:circinus
-          docker run --rm --privileged \
-            -v "$PWD:/repo" \
-            -w /repo \
-            -e VERSION="${{ inputs.version }}" \
-            vyos/vyos-build:circinus \
-            bash -lc ./scripts/build.sh
+          image="$(jq -r '.build_container' custom-build.json)"
+          version="${{ inputs.version }}"
+          docker pull "$image"
+          args=(docker run --rm --privileged -v "$PWD:/repo" -w /repo -e "VERSION=$version")
+          args+=("$image" bash -lc ./scripts/build.sh)
+          "${args[@]}"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: vyos-stream-custom-amd64
           path: out/
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version || 'custom-build' }}
+          name: ${{ inputs.version || 'custom-build' }}
+          files: out/*
+          make_latest: false

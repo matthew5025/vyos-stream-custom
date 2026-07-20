@@ -2,6 +2,12 @@
 
 Custom VyOS build source with MediaTek MT7922/MT7921E support.
 
+The build and refresh workflows are driven by:
+
+```text
+custom-build.json
+```
+
 The upstream build source lives as plain files in:
 
 ```text
@@ -34,13 +40,16 @@ Or run the `Build Custom VyOS` GitHub Actions workflow.
 
 ## Upgrade
 
-Run the `Refresh Upstream Source` workflow with a new `vyos_build_ref`.
+Edit `custom-build.json` with the new upstream ref/commit/version, then run the
+`Refresh Upstream Source` workflow.
 The workflow:
 
-1. Clones the selected upstream `vyos-build` ref.
-2. Replaces `upstream/vyos-build/` with that source as plain files.
-3. Applies every patch in `patches/`.
-4. Opens a PR with the resulting source-tree update.
+1. Reads `custom-build.json`.
+2. Clones the configured upstream `vyos-build` ref.
+3. Verifies it resolves to the configured commit.
+4. Replaces `upstream/vyos-build/` with that source as plain files.
+5. Applies every patch in `patches/`.
+6. Opens a PR with the resulting source-tree update.
 
 Official VyOS Stream 2026.03 reports `build_git: 1cac4fd63750b0` on branch
 `circinus`, but that commit is not currently reachable from public
