@@ -32,7 +32,7 @@ docker run --rm --privileged \
   -v "$PWD:/repo" \
   -w /repo \
   -e VERSION=2026.03-custom \
-  vyos/vyos-build:circinus \
+  vyos/vyos-build:rolling \
   bash -lc ./scripts/build.sh
 ```
 

@@ -4,7 +4,7 @@
   "build_flavor": "generic",
   "build_type": "development",
   "build_by": "local",
-  "build_container": "vyos/vyos-build:circinus",
+  "build_container": "vyos/vyos-build:rolling",
   "upstream": {
     "repo": "https://github.com/vyos/vyos-build.git",
     "ref": "rolling",
