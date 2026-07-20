@@ -1,0 +1,37 @@
+name: Refresh Upstream Source
+
+on:
+  workflow_dispatch:
+    inputs:
+      vyos_build_ref:
+        description: Upstream vyos-build branch, tag, or commit to import
+        required: true
+        default: rolling
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Refresh upstream tree and reapply patches
+        env:
+          VYOS_BUILD_REF: ${{ inputs.vyos_build_ref }}
+        run: |
+          set -eux
+          ./scripts/refresh-upstream.sh
+
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: refresh-upstream-${{ inputs.vyos_build_ref }}
+          title: Refresh upstream VyOS source to ${{ inputs.vyos_build_ref }}
+          commit-message: Refresh upstream VyOS source to ${{ inputs.vyos_build_ref }}
+          body: |
+            Refreshes `upstream/vyos-build/` from `${{ inputs.vyos_build_ref }}` and reapplies the patch series in `patches/`.

@@ -1,0 +1,5 @@
+{
+  "repo": "https://github.com/vyos/vyos-build.git",
+  "ref": "rolling",
+  "commit": "51ee73ec541b6e28ee430607ab93665ca8c13a93"
+}
