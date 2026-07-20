@@ -1,6 +1,6 @@
 # vyos-stream-custom
 
-Custom VyOS build source with MediaTek MT7922/MT7921E support.
+Custom VyOS build source with a maintained local patch set.
 
 The build and refresh workflows are driven by:
 
@@ -31,7 +31,7 @@ That gives two upgrade paths:
 docker run --rm --privileged \
   -v "$PWD:/repo" \
   -w /repo \
-  -e VERSION=2026.03-mt7922 \
+  -e VERSION=2026.03-custom \
   vyos/vyos-build:circinus \
   bash -lc ./scripts/build.sh
 ```

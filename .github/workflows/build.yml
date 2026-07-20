@@ -6,7 +6,7 @@ on:
       version:
         description: ISO version string
         required: false
-        default: 2026.03-mt7922
+        default: 2026.03-custom
 
 jobs:
   build:
@@ -32,7 +32,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: vyos-stream-custom-amd64
+          name: vyos-custom-amd64
           path: out/
 
       - name: Publish release

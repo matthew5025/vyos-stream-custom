@@ -1,5 +1,5 @@
 {
-  "version": "2026.03-mt7922",
+  "version": "2026.03-custom",
   "architecture": "amd64",
   "build_flavor": "generic",
   "build_type": "development",
