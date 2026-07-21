@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Refresh upstream tree and reapply patches
         run: |
@@ -23,7 +23,7 @@ jobs:
           ./scripts/refresh-upstream.sh
 
       - name: Open pull request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           branch: refresh-upstream-from-config
           title: Refresh upstream VyOS source from custom-build.json
