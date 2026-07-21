@@ -75,7 +75,13 @@ build_iso() {
 collect_outputs() {
   prepare_dirs
   cd "${build_dir}"
-  cp build/*.iso "${out_dir}/"
+  local iso_name="vyos-${version}-${build_flavor}-${architecture}.iso"
+  if [[ ! -f "build/${iso_name}" ]]; then
+    echo "No canonical ISO found at ${build_dir}/build/${iso_name}" >&2
+    exit 1
+  fi
+  rm -f "${out_dir}"/*.iso
+  cp "build/${iso_name}" "${out_dir}/"
   cp build/*.sha256 "${out_dir}/" 2>/dev/null || true
 }
 
