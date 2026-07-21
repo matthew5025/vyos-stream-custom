@@ -1,6 +1,6 @@
 name: Refresh Upstream Source
 
-on:
+"on":
   workflow_dispatch:
 
 permissions:
