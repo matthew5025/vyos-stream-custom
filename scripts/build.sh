@@ -31,7 +31,8 @@ ccache_stats() {
 build_kernel_packages() {
   prepare_dirs
   cd "${build_dir}/scripts/package-build/linux-kernel"
-  ./build.py --config package.toml --keep-kernel --packages linux-kernel linux-firmware
+  ./build.py --config package.toml --keep-kernel \
+    --packages linux-kernel linux-firmware qat igb ixgbe ixgbevf i40e ice iavf realtek-r8126 realtek-r8152
 }
 
 copy_packages() {
@@ -58,7 +59,11 @@ stage_packages() {
     "linux-image-*-vyos_*_${architecture}.deb" \
     "linux-libc-dev_*_${architecture}.deb" \
     "linux-perf-*-vyos_*_${architecture}.deb" \
-    "vyos-linux-firmware_*.deb"
+    "vyos-linux-firmware_*.deb" \
+    "vyos-intel-*.deb" \
+    "vyos-intel-qat_*.deb" \
+    "vyos-drivers-realtek-r8126_*.deb" \
+    "vyos-drivers-realtek-r8152_*.deb"
   find packages -maxdepth 1 -type f -name "*.deb" -print -exec sha256sum {} \; | tee "${out_dir}/package-SHA256SUMS"
 }
 

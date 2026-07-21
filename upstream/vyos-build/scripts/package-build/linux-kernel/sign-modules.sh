@@ -13,6 +13,10 @@ SIGN_FILE="${KERNEL_DIR}/scripts/sign-file"
 CONFIG_FILE="${KERNEL_DIR}/.config"
 
 if [ -f ${EPHEMERAL_KEY} ] && [ -f ${EPHEMERAL_CERT} ]; then
+    find ${MODULE_DIR} -type f -name \*.ko.xz | while read MODULE; do
+      echo "I: Decompressing ${MODULE} before signing ..."
+      xz --decompress ${MODULE}
+    done
     find ${MODULE_DIR} -type f -name \*.ko | while read MODULE; do
       echo "I: Signing ${MODULE} ..."
       ${SIGN_FILE} sha512 ${EPHEMERAL_KEY} ${EPHEMERAL_CERT} ${MODULE}
