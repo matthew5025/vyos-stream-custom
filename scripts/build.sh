@@ -31,7 +31,7 @@ ccache_stats() {
 build_kernel_packages() {
   prepare_dirs
   cd "${build_dir}/scripts/package-build/linux-kernel"
-  ./build.py --config package.toml --packages linux-kernel linux-firmware
+  ./build.py --config package.toml --keep-kernel --packages linux-kernel linux-firmware
 }
 
 copy_packages() {

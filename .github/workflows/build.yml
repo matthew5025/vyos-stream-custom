@@ -30,11 +30,25 @@ jobs:
           if [ -z "$version" ]; then
             version="$(jq -r '.version' custom-build.json)"
           fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            release_tag="$version"
+          else
+            release_tag="${version}-${GITHUB_SHA::7}"
+          fi
           echo "BUILD_IMAGE=$image" >> "$GITHUB_ENV"
           echo "BUILD_VERSION=$version" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=$release_tag" >> "$GITHUB_ENV"
 
       - name: Pull build container
         run: docker pull "$BUILD_IMAGE"
+
+      - name: Restore compiler cache
+        uses: actions/cache@v6
+        with:
+          path: .ccache
+          key: vyos-ccache-${{ runner.os }}-${{ hashFiles('custom-build.json', 'patches/*.patch', 'upstream/vyos-build/scripts/package-build/linux-kernel/package.toml', 'upstream/vyos-build/scripts/package-build/linux-kernel/build-kernel.sh', 'upstream/vyos-build/scripts/package-build/linux-kernel/config/**/*.config', 'upstream/vyos-build/scripts/package-build/linux-kernel/config/**/vyos_defconfig') }}
+          restore-keys: |
+            vyos-ccache-${{ runner.os }}-
 
       - name: Show build config
         run: |
@@ -51,6 +65,9 @@ jobs:
             -v "$PWD:/repo" \
             -w /repo \
             -e "VERSION=$BUILD_VERSION" \
+            -e CCACHE_DIR=/repo/.ccache \
+            -e CCACHE_MAXSIZE=5G \
+            -e CCACHE_COMPRESS=1 \
             "$BUILD_IMAGE" \
             bash -lc './scripts/build.sh kernel-packages'
 
@@ -99,10 +116,9 @@ jobs:
           path: out/
 
       - name: Publish release
-        if: github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ env.BUILD_VERSION }}
-          name: ${{ env.BUILD_VERSION }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: VyOS ${{ env.RELEASE_TAG }}
           files: out/*
           make_latest: false
