@@ -21,6 +21,14 @@ fi
 
 # Retrieve firmware blobs from source files
 FW_FILES=$(find ${KERNEL_DIR}/debian/linux-image-${KERNEL_VERSION}${KERNEL_SUFFIX}/lib/modules/${KERNEL_VERSION}${KERNEL_SUFFIX}/kernel/drivers/net \( -name '*.ko' -o -name '*.ko.xz' \) | xargs modinfo | grep "^firmware:" | awk '{print $2}')
+EXTRA_FW_FILES="
+mediatek/WIFI_MT7961_patch_mcu_1_2_hdr.bin
+mediatek/WIFI_RAM_CODE_MT7961_1.bin
+mediatek/WIFI_MT7922_patch_mcu_1_1_hdr.bin
+mediatek/WIFI_RAM_CODE_MT7922_1.bin
+mediatek/BT_RAM_CODE_MT7922_1_1_hdr.bin
+"
+FW_FILES=$(printf "%s\n%s\n" "${FW_FILES}" "${EXTRA_FW_FILES}" | awk 'NF' | sort -u)
 
 # Debian package will use the descriptive Git commit as version
 GIT_COMMIT=$(cd ${CWD}/${LINUX_FIRMWARE}; git describe --always)
@@ -84,6 +92,11 @@ for FILE_PATTERN in ${FW_FILES}; do
         fi
     done
 done
+
+if ! find "${VYOS_FIRMWARE_DIR}/lib/firmware" -type f -print -quit | grep -q .; then
+    echo "E: no firmware files were installed into ${VYOS_FIRMWARE_DIR}" >&2
+    exit 1
+fi
 
 echo "I: Create linux-firmware package"
 rm -f ${VYOS_FIRMWARE_NAME}_*.deb
